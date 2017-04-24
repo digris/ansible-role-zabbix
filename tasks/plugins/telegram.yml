@@ -1,0 +1,18 @@
+---
+
+
+##
+# add zbxtg scripts
+# https://github.com/ableev/Zabbix-in-Telegram
+
+- name: add zbxtg.py to alertscripts
+  template:
+    src: plugins/telegram/zbxtg.py
+    dest: '{{ zabbix_alert_scripts_path }}/zbxtg.py'
+    mode: 0755
+
+- name: add zbxtg settings
+  template:
+    src: plugins/telegram/zbxtg_settings.py
+    dest: '{{ zabbix_alert_scripts_path }}/zbxtg_settings.py'
+    mode: 0644

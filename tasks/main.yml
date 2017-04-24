@@ -1,0 +1,26 @@
+---
+
+- include: packages.yml
+  tags: packages
+  become: yes
+
+- include: postgresql.yml
+  tags: database
+  become: yes
+
+- include: zabbix-server.yml
+  tags: zabbix-server
+  become: yes
+
+- include: nginx.yml
+  tags: nginx
+  become: yes
+
+- include: plugins.yml
+  tags: plugins
+  become: yes
+
+- include: theme.yml
+  tags: theme
+  become: yes
+

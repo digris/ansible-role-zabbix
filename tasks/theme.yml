@@ -1,0 +1,11 @@
+
+
+- name: add custom stylesheet
+  template:
+    src: theme/digris-theme.css
+    dest: /usr/share/zabbix/styles/digris-theme.css
+
+- name: enable custom theme
+  template:
+    src: theme/Z.php.j2
+    dest: /usr/share/zabbix/include/classes/core/Z.php

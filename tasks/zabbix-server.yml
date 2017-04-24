@@ -1,0 +1,153 @@
+---
+
+
+##
+# users & groups
+# as zabbix is installed via apt we don't have to create users manually
+
+## create media directories
+#- name: create attachments directory
+#  file: path='{{ zabbix_attachments_path }}'
+#        state=directory
+#        owner={{ zabbix_user }} group={{ zabbix_group }}
+
+
+- name: add zabbix repository key
+  apt_key: url=https://repo.zabbix.com/zabbix-official-repo.key state=present
+
+- name: "add zabbix repository {{ zabbix_version }}"
+  apt_repository:
+    repo: "{{ item }} http://repo.zabbix.com/zabbix/{{ zabbix_version }}/{{ ansible_distribution.lower() }}/ {{ ansible_distribution_release }} main"
+    state: present
+  with_items:
+    - deb-src
+    - deb
+
+
+- name: install zabbix-server-pgsql
+  apt: pkg=zabbix-server-pgsql state=present
+
+- name: install zabbix-get
+  apt: pkg=zabbix-get state=present
+
+
+##
+# database configuration
+
+##
+# check if the database is already here.
+# in case that not we have to import the initial dump after
+# setting up the database & db-user
+# http://stackoverflow.com/questions/29337686/pgsql-how-to-import-database-dump-only-when-database-completely-empty
+- name: "check if {{ zabbix_database_name }} database already exists"
+  become: yes
+  become_user: postgres
+  shell: psql -l | grep "{{ zabbix_database_name }}"
+  changed_when: False
+  ignore_errors: true
+  register: zabbix_database_existence
+
+
+##
+# create database, user & permissions
+- name: ensure database is created
+  postgresql_db: name={{ zabbix_database_name }}
+  become_user: postgres
+
+- name: ensure user has access to database
+  postgresql_user: db={{ zabbix_database_name }} name={{ zabbix_database_user }} password={{ zabbix_database_password }} priv=ALL
+  become_user: postgres
+
+- name: ensure user does not have unnecessary privilege
+  postgresql_user: name={{ zabbix_database_user }} role_attr_flags=NOSUPERUSER
+  become_user: postgres
+
+#
+#- name: ensure no other user can access the database
+#  postgresql_privs: db={{ zabbix_database_name }} role=PUBLIC type=database priv=ALL state=absent
+#  become_user: postgres
+
+
+##
+# see above: lod initial dump in case the db has just been created
+- name: load initial zabbix database on first run
+  become_user: '{{ zabbix_database_user }}'
+  shell: cat /usr/share/doc/zabbix-server-pgsql/create.sql.gz | gunzip | psql -U "{{ zabbix_database_user }}" "{{ zabbix_database_name }}"
+  when: zabbix_database_existence | failed
+
+
+- name: add zabbix_server.conf config
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+
+
+
+
+
+##
+# zabbix web frontend
+
+- name: install php5-pgsql
+  apt: pkg=php5-pgsql state=present
+
+- name: install zabbix-frontend-php
+  apt: pkg=zabbix-frontend-php state=present
+
+
+- name: add zabbix_server.conf config
+  template:
+    src: zabbix.conf.php.j2
+    dest: /etc/zabbix/web/zabbix.conf.php
+
+
+##
+# we want to have zabbix running on "/" instead of "/zabbix/"
+#
+- name: disable apache default site
+  file:
+    state: absent
+    path: /etc/apache2/sites-enabled/000-default.conf
+
+- name: disable default zabbix apache config
+  file:
+    state: absent
+    path: /etc/zabbix/apache.conf
+
+- name: disable default zabbix apache config
+  file:
+    state: absent
+    path: /etc/apache2/conf-enabled/zabbix.conf
+
+- name: add zabbix apache.conf config
+  template:
+    src: apache.conf.j2
+    dest: /etc/apache2/sites-enabled/zabbix.conf
+
+
+
+##
+# change apache2 default port
+- name: apache2 listen on port 8001
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen 8001" state=present
+
+
+##
+# restart services
+
+- name: restart zabbix apache2
+  service:
+    name: apache2
+    state: restarted
+
+- name: (re)start zabbix-server
+  service:
+    name: zabbix-server
+    state: restarted
+
+- name: enable zabbix-server start on boot
+  service:
+    name: zabbix-server
+    enabled: yes
+
+

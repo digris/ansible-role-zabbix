@@ -1,0 +1,7 @@
+---
+
+- name: restart zabbix
+  supervisorctl: name=zabbix state=restarted
+
+- name: restart apache2
+  service: name=apache2 state=restarted

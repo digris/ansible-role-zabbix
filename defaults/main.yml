@@ -1,0 +1,48 @@
+---
+
+##
+# users, groups & directories
+zabbix_base_dir: /srv/zabbix
+zabbix_log_dir: /var/log/zabbix
+
+zabbix_user: zabbix
+zabbix_group: zabbix
+zabbix_user_home_dir: /home/zabbix
+
+zabbix_hostname: 'zabbix.example.com'
+zabbix_server_name: 'Example Zabbix Instance'
+
+zabbix_timezone: 'Europe/Zurich'
+
+##
+# zabbix & plugin versions (check versions on github)
+#  - https://github.com/zabbix/zabbix
+zabbix_version: 3.2
+
+
+##
+# database
+zabbix_database_host: localhost
+zabbix_database_name: zabbix
+zabbix_database_user: zabbix
+zabbix_database_password: zabbix
+zabbix_database_port: 5432
+
+
+##
+# authentication (imap)
+# TODO: not implemented
+zabbix_imap_auth_enable: true
+zabbix_imap_auth_hostname: imap.example.com
+zabbix_imap_auth_domain: example.com
+
+
+##
+# plugins / alerts
+zabbix_alert_scripts_path: /usr/lib/zabbix/alertscripts
+
+# telegram plugin
+zabbix_plugin_zbxtg_enabled: false
+zabbix_plugin_zbxtg_key: '***'
+zabbix_plugin_zbxtg_api_user: 'telegram'
+zabbix_plugin_zbxtg_api_password: 'telegram'

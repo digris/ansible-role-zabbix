@@ -1,0 +1,7 @@
+---
+
+- include: plugins/telegram.yml
+  tags: plugin-telegram
+  become: yes
+  notify: restart zabbix-server
+  when: zabbix_plugin_zbxtg_enabled is defined and zabbix_plugin_zbxtg_enabled == true
